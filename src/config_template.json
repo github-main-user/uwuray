@@ -1,0 +1,123 @@
+{
+  "log": {
+    "level": "warn"
+  },
+  "dns": {
+    "servers": [
+      {
+        "tag": "proxy_dns",
+        "type": "https",
+        "server": "1.1.1.1",
+        "path": "/dns-query",
+        "detour": "vless-out"
+      },
+      {
+        "tag": "direct_dns",
+        "type": "udp",
+        "server": "8.8.8.8"
+      }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [
+          ".ru",
+          ".sky.pro"
+        ],
+        "server": "direct_dns"
+      },
+      {
+        "domain_keyword": [
+          "zelenaya",
+          "vk",
+          "yandex",
+          "github",
+          "githubusercontent"
+        ],
+        "server": "direct_dns"
+      }
+    ],
+    "final": "proxy_dns"
+  },
+  "outbounds": [
+    {
+      "type": "direct",
+      "tag": "direct"
+    }
+  ],
+  "inbounds": [
+    {
+      "type": "http",
+      "tag": "http-in",
+      "listen": "127.0.0.1",
+      "listen_port": 2080
+    },
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "interface_name": "tun0",
+      "address": [
+        "172.18.0.1/30"
+      ],
+      "mtu": 9000,
+      "auto_route": true,
+      "auto_redirect": true,
+      "route_exclude_address": [
+        "192.168.0.0/16",
+        "10.16.64.0/20"
+      ],
+      "sniff": true,
+      "stack": "mixed"
+    }
+  ],
+  "route": {
+    "auto_detect_interface": true,
+    "default_domain_resolver": "direct_dns",
+    "rules": [
+      {
+        "protocol": [
+          "dns"
+        ],
+        "action": "hijack-dns"
+      },
+      {
+        "protocol": "ssh",
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          ".ru",
+          ".sky.pro"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "domain_keyword": [
+          "zelenaya",
+          "vk",
+          "yandex",
+          "github",
+          "githubusercontent"
+        ],
+        "outbound": "direct"
+      },
+      {
+        "inbound": [
+          "http-in"
+        ],
+        "outbound": "vless-out"
+      },
+      {
+        "inbound": [
+          "tun-in"
+        ],
+        "process_name": [
+          "librewolf",
+          "Discord",
+          "Telegram"
+        ],
+        "outbound": "vless-out"
+      }
+    ],
+    "final": "direct"
+  }
+}
