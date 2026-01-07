@@ -82,21 +82,28 @@ def generate_vless_outbound(parsed_preset: dict) -> dict:
         },
         "uuid": parsed_preset["uuid"],
         "transport": {
-            "type": transport if (transport := parsed_preset["extra"]["type"]) else ""
+            "type": (
+                transport
+                if (transport := parsed_preset["extra"]["type"]) != "tcp"
+                else ""
+            )
         },
     }
 
 
-def fzf_select(options):
-    proc = subprocess.Popen(
-        "fzf", stdin=subprocess.PIPE, stdout=subprocess.PIPE, text=True
-    )
+def select_preset(presets: dict) -> str:
+    presets_list = list(presets.keys())
+    while True:
+        for i, preset in enumerate(presets_list):
+            print(f"[{i}]: {preset}")
 
-    input_data = "\n".join(options)
-    stdout, _ = proc.communicate(input=input_data)
-
-    result = stdout.strip()
-    return result
+        try:
+            selected_index = int(input("Select preset by number: "))
+            if 0 <= selected_index < len(presets_list):
+                return presets_list[selected_index]
+            print("Invalid number, please try again")
+        except ValueError:
+            print("Invalid input, please enter a number")
 
 
 def run_singbox(config: str):

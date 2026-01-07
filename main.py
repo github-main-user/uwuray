@@ -7,13 +7,13 @@ import requests
 
 from src.config import settings
 from src.utils import (
-    fzf_select,
     generate_vless_outbound,
     is_singbox_installed,
     is_subscription_url_reachable,
     is_subscription_url_valid,
     parse_presets,
     run_singbox,
+    select_preset,
 )
 
 
@@ -56,7 +56,7 @@ def main() -> None:
 
     # Another part
     config_template = json.loads(settings.CONFIG_TEMPLATE.read_text())
-    selected_preset = fzf_select(parsed_presets)
+    selected_preset = select_preset(parsed_presets)
     outbound = generate_vless_outbound(parsed_presets[selected_preset])
     config_template["outbounds"].append(outbound)
     final_config = json.dumps(config_template)
