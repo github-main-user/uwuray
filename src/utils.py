@@ -107,9 +107,6 @@ def select_preset(presets: dict) -> str:
 
 
 def run_singbox(config: str):
-    """
-    Checks and runs sing-box with the given configuration.
-    """
     temp_config_path = None
     try:
         with tempfile.NamedTemporaryFile(
@@ -121,15 +118,7 @@ def run_singbox(config: str):
             temp_config_path = temp_config.name
             temp_config.write(config)
 
-        check_cmd = ["sing-box", "check", "-c", temp_config_path]
-        print("Checking configuration...")
-        result = subprocess.run(check_cmd, capture_output=True, text=True, check=False)
-        if result.returncode != 0:
-            print("Configuration check failed:")
-            print(result.stderr)
-            return
-
-        print("Configuration check successful. Running sing-box...")
+        print("Running sing-box...")
         run_cmd = ["sing-box", "run", "-c", temp_config_path]
         subprocess.run(run_cmd, check=False)
     finally:
