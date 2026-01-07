@@ -113,7 +113,7 @@ def run_singbox(config: str):
             mode="w",
             delete=False,
             suffix=".json",
-            dir=settings.APP_CONFIG_PATH,
+            dir="/tmp",
         ) as temp_config:
             temp_config_path = temp_config.name
             temp_config.write(config)
