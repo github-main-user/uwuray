@@ -130,7 +130,7 @@ def run_singbox(config: str):
             return
 
         print("Configuration check successful. Running sing-box...")
-        run_cmd = ["sudo", "sing-box", "run", "-c", temp_config_path]
+        run_cmd = ["sing-box", "run", "-c", temp_config_path]
         subprocess.run(run_cmd, check=False)
     finally:
         if temp_config_path and os.path.exists(temp_config_path):
