@@ -61,7 +61,9 @@ def parse_presets(urls: list[str]) -> dict:
 
 
 def generate_vless_outbound(parsed_preset: dict) -> dict:
-    return {
+    transport = parsed_preset["extra"]["type"]
+
+    result = {
         "type": "vless",
         "tag": "vless-out",
         "server": parsed_preset["host"],
@@ -81,14 +83,12 @@ def generate_vless_outbound(parsed_preset: dict) -> dict:
             },
         },
         "uuid": parsed_preset["uuid"],
-        "transport": {
-            "type": (
-                transport
-                if (transport := parsed_preset["extra"]["type"]) != "tcp"
-                else ""
-            )
-        },
     }
+
+    if transport != "tcp":
+        result["transport"] = {"type": transport}
+
+    return result
 
 
 def select_preset(presets: dict) -> str:
