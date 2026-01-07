@@ -17,5 +17,8 @@ class Settings:
 
         self.CONFIG_TEMPLATE: Path = self.APP_CONFIG_PATH / "config_template.json"
 
+        self.PREVIOUS_PRESET: Path = self.APP_CONFIG_PATH / "previous_preset.txt"
+        self.PREVIOUS_PRESET.touch()
+
 
 settings = Settings()
