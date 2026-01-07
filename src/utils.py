@@ -82,7 +82,7 @@ def generate_vless_outbound(parsed_preset: dict) -> dict:
         },
         "uuid": parsed_preset["uuid"],
         "transport": {
-            "type": parsed_preset["extra"]["type"],
+            "type": transport if (transport := parsed_preset["extra"]["type"]) else ""
         },
     }
 
@@ -123,9 +123,8 @@ def run_singbox(config: str):
             return
 
         print("Configuration check successful. Running sing-box...")
-        run_cmd = ["sing-box", "run", "-c", temp_config_path]
+        run_cmd = ["sudo", "sing-box", "run", "-c", temp_config_path]
         subprocess.run(run_cmd, check=False)
-
     finally:
         if temp_config_path and os.path.exists(temp_config_path):
             os.remove(temp_config_path)
