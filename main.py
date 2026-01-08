@@ -101,6 +101,7 @@ def main(args: Namespace) -> None:
 
     if not selected_preset_name:
         selected_preset_name = select_preset(presets)
+        print(f"Selected preset: {selected_preset_name}")
 
     selected_preset = presets[selected_preset_name]
     prepare_and_run(selected_preset, args.log_level, args.print_config)
