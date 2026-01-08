@@ -65,6 +65,7 @@ def main(args: Namespace) -> None:
         selected_preset = select_preset(parsed_presets)
 
     outbound = generate_vless_outbound(parsed_presets[selected_preset])
+    config_template["log"]["level"] = args.log_level
     config_template["outbounds"].append(outbound)
     final_config = json.dumps(config_template, indent=2)
 
@@ -87,6 +88,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-p", "--run-previous", action="store_true", help="Run previous preset"
+    )
+    parser.add_argument(
+        "-l",
+        "--log-level",
+        choices=["trace", "debug", "info", "warn", "error", "fatal", "panic"],
+        default="warn",
+        help="Set log level (`warn` is default)",
     )
 
     try:
