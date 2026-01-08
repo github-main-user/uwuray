@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -47,7 +48,7 @@ def run_singbox(config: dict[str, Any]):
             dir=tempfile.gettempdir(),
         ) as temp_config:
             temp_config_path = temp_config.name
-            temp_config.write(str(config))
+            temp_config.write(json.dumps(config, indent=2))
 
         print("Running sing-box...")
         run_cmd = ["sing-box", "run", "-c", temp_config_path]
