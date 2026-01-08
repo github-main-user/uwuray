@@ -18,12 +18,6 @@ class Settings:
         self._PRESETS: Path = self.APP_CONFIG_PATH / "presets.json"
         self._PRESETS.touch()
 
-        self._CONFIG_TEMPLATE: Path = self.APP_CONFIG_PATH / "config_template.json"
-        if not self._CONFIG_TEMPLATE.exists():
-            self._CONFIG_TEMPLATE.write_text(
-                (self._BASE_DIR / "resources/config_template.json").read_text()
-            )
-
         self._PREVIOUS_PRESET: Path = self.APP_CONFIG_PATH / "previous_preset.txt"
         self._PREVIOUS_PRESET.touch()
 
@@ -41,7 +35,7 @@ class Settings:
         self._PRESETS.write_text(json.dumps(presets, ensure_ascii=False, indent=2))
 
     def get_config_template(self) -> dict[str, Any]:
-        return json.loads(self._CONFIG_TEMPLATE.read_text())
+        return json.loads((self._BASE_DIR / "resources/config_template.json").read_text())
 
     def get_previous_preset(self) -> str:
         return self._PREVIOUS_PRESET.read_text().strip()
