@@ -35,13 +35,15 @@ class Settings:
         self._PRESETS.write_text(json.dumps(presets, ensure_ascii=False, indent=2))
 
     def get_config_template(self) -> dict[str, Any]:
-        return json.loads((self._BASE_DIR / "resources/config_template.json").read_text())
+        return json.loads(
+            (self._BASE_DIR / "resources/config_template.json").read_text()
+        )
 
     def get_previous_preset(self) -> str:
         return self._PREVIOUS_PRESET.read_text().strip()
 
     def save_previous_preset(self, preset_name: str) -> None:
-        self._PREVIOUS_PRESET.write_text(preset_name)
+        self._PREVIOUS_PRESET.write_text(preset_name.strip())
 
 
 settings = Settings()

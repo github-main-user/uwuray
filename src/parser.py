@@ -19,7 +19,7 @@ def _parse_vless_string(url: str) -> VlessPreset | None:
         query_params = {k: v[0] for k, v in parse_qs(result.query).items()}
 
         return VlessPreset(
-            name=unquote(result.fragment) if result.fragment else "No name",
+            name=unquote(result.fragment).strip() if result.fragment else "No name",
             uuid=uuid,
             host=host,
             port=port,

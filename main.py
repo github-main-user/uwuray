@@ -56,7 +56,7 @@ def get_presets(force_update: bool) -> dict[str, VlessPreset]:
         parsed_presets = parse_presets(preset_urls)
 
         presets_to_save = {
-            name: preset.__dict__ for name, preset in parsed_presets.items()
+            name.strip(): preset.__dict__ for name, preset in parsed_presets.items()
         }
         settings.save_presets(presets_to_save)
         return parsed_presets
