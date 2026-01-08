@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-u", "--update-subscription", help="Update subscription")
     parser.add_argument(
-        "-s",
+        "-c",
         "--print-config",
         action="store_true",
         help="Print generated config and exit",
