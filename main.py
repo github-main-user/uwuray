@@ -64,13 +64,21 @@ def get_presets(force_update: bool) -> dict[str, VlessPreset]:
     return {name: VlessPreset(**data) for name, data in cached_presets.items()}
 
 
-def prepare_and_run(preset: VlessPreset, log_level: str, print_only: bool) -> None:
+def prepare_and_run(
+    preset: VlessPreset, log_level: str, proxy_all: bool, print_only: bool
+) -> None:
     """Generates the final config and either prints it or runs sing-box."""
     config_template = settings.get_config_template()
     outbound = generate_vless_outbound(preset)
 
     config_template["log"]["level"] = log_level
     config_template["outbounds"].append(outbound)
+    if proxy_all:
+        config_template["dns"]["rules"] = []
+        config_template["route"]["rules"] = [
+            {"protocol": "dns", "action": "hijack-dns"}
+        ]
+        config_template["route"]["final"] = "vless-out"
 
     if print_only:
         final_config_str = json.dumps(config_template, indent=2)
@@ -104,7 +112,7 @@ def main(args: Namespace) -> None:
         print(f"Selected preset: {selected_preset_name}")
 
     selected_preset = presets[selected_preset_name]
-    prepare_and_run(selected_preset, args.log_level, args.print_config)
+    prepare_and_run(selected_preset, args.log_level, args.proxy_all, args.print_config)
 
 
 def create_parser() -> ArgumentParser:
@@ -114,7 +122,7 @@ def create_parser() -> ArgumentParser:
         "-u",
         "--update-subscription",
         action="store_true",
-        help="Update presets from the subscription link.",
+        help="Update presets from the subscription link before start.",
     )
     parser.add_argument(
         "-c",
@@ -134,6 +142,12 @@ def create_parser() -> ArgumentParser:
         choices=["trace", "debug", "info", "warn", "error", "fatal", "panic"],
         default="warn",
         help="Set the log level for sing-box (default: warn).",
+    )
+    parser.add_argument(
+        "-a",
+        "--proxy-all",
+        action="store_true",
+        help="Proxy all trafic through vless.",
     )
     return parser
 
