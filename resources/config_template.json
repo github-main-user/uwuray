@@ -79,7 +79,9 @@
       },
       {
         "domain_suffix": [
-          ".dexland.org"
+          ".dexland.org",
+          ".githubcopilot.com",
+          ".mistral.ai"
         ],
         "outbound": "vless-out"
       },
