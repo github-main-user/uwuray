@@ -34,10 +34,10 @@ def _parse_vless_string(url: str) -> VlessPreset | None:
         return None
 
 
-def parse_presets(urls: list[str]) -> dict[str, VlessPreset]:
-    result = {}
+def parse_presets(urls: list[str]) -> list[VlessPreset]:
+    result = []
     for url in urls:
         parsed_preset = _parse_vless_string(url)
         if parsed_preset:
-            result[parsed_preset.name] = parsed_preset
+            result.append(parsed_preset)
     return result

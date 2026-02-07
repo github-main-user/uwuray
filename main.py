@@ -2,6 +2,7 @@
 import json
 import sys
 from argparse import ArgumentParser, Namespace
+from dataclasses import asdict
 
 from src.config import settings
 from src.models import VlessPreset
@@ -41,11 +42,10 @@ def handle_subscription() -> None:
             sys.exit(0)
 
 
-def get_presets(force_update: bool) -> dict[str, VlessPreset]:
+def get_presets(force_update: bool) -> list[VlessPreset]:
     """
     Loads presets from cache or fetches them from the subscription URL.
-    The presets are stored as a dictionary mapping from the preset name to the
-    VlessPreset object.
+    The presets are stored as a list of VlessPreset objects.
     """
     cached_presets = settings.get_presets()
 
@@ -55,13 +55,11 @@ def get_presets(force_update: bool) -> dict[str, VlessPreset]:
         preset_urls = fetch_subscription_data(sub_url)
         parsed_presets = parse_presets(preset_urls)
 
-        presets_to_save = {
-            name.strip(): preset.__dict__ for name, preset in parsed_presets.items()
-        }
+        presets_to_save = [asdict(preset) for preset in parsed_presets]
         settings.save_presets(presets_to_save)
         return parsed_presets
 
-    return {name: VlessPreset(**data) for name, data in cached_presets.items()}
+    return [VlessPreset(**data) for data in cached_presets]
 
 
 def prepare_and_run(
@@ -98,20 +96,22 @@ def main(args: Namespace) -> None:
     previous_preset_name = settings.get_previous_preset()
     presets = get_presets(force_update=args.update_subscription)
 
-    selected_preset_name: str | None = None
+    selected_preset: VlessPreset | None = None
 
     if args.run_previous and previous_preset_name:
-        if previous_preset_name in presets:
-            selected_preset_name = previous_preset_name
-            print(f'Running previous preset: "{previous_preset_name}"')
-        else:
+        # Find preset by name
+        for preset in presets:
+            if preset.name == previous_preset_name:
+                selected_preset = preset
+                print(f'Running previous preset: "{previous_preset_name}"')
+                break
+        if not selected_preset:
             print(f'Warning: Previous preset "{previous_preset_name}" not found.')
 
-    if not selected_preset_name:
-        selected_preset_name = select_preset(presets)
-        print(f"Selected preset: {selected_preset_name}")
+    if not selected_preset:
+        selected_preset = select_preset(presets)
+        print(f"Selected preset: {selected_preset.name}")
 
-    selected_preset = presets[selected_preset_name]
     prepare_and_run(selected_preset, args.log_level, args.proxy_all, args.print_config)
 
 

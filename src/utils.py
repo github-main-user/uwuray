@@ -1,21 +1,21 @@
 import sys
-from typing import Any
+
+from src.models import VlessPreset
 
 
-def select_preset(presets: dict[str, Any]) -> str:
-    presets_list = list(presets.keys())
+def select_preset(presets: list[VlessPreset]) -> VlessPreset:
     while True:
-        for i, preset_name in enumerate(presets_list):
-            print(f"[{i:02}]: {preset_name}")
+        for i, preset in enumerate(presets):
+            print(f"[{i:02}]: {preset.name}")
 
         try:
             raw_selection = input("Select preset by number: ")
             selected_index = int(raw_selection)
-            if 0 <= selected_index < len(presets_list):
-                return presets_list[selected_index]
+            if 0 <= selected_index < len(presets):
+                return presets[selected_index]
             print(
                 f"Invalid number. Please enter a number between 0 and"
-                f" {len(presets_list) - 1}."
+                f" {len(presets) - 1}."
             )
         except ValueError:
             print(
