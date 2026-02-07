@@ -6,7 +6,7 @@ def select_preset(presets: dict[str, Any]) -> str:
     presets_list = list(presets.keys())
     while True:
         for i, preset_name in enumerate(presets_list):
-            print(f"[{i}]: {preset_name}")
+            print(f"[{i:02}]: {preset_name}")
 
         try:
             raw_selection = input("Select preset by number: ")
