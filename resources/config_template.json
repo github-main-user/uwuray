@@ -111,7 +111,15 @@
         "process_name": [
           "librewolf",
           "Discord",
-          "Telegram"
+          "Telegram",
+          "opencode"
+        ],
+        "outbound": "vless-out"
+      },
+      {
+        "inbound": "tun-in",
+        "source_ip_cidr": [
+          "192.168.122.0/24"
         ],
         "outbound": "vless-out"
       }
