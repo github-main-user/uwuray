@@ -3,7 +3,11 @@ import sys
 from src.models import VlessPreset
 
 
-def select_preset(presets: list[VlessPreset]) -> VlessPreset:
+def select_preset(presets: list[VlessPreset]) -> VlessPreset | None:
+    if not presets:
+        print("There is no preset to select")
+        return
+
     while True:
         for i, preset in enumerate(presets):
             print(f"[{i:02}]: {preset.name}")
