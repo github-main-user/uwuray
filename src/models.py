@@ -9,7 +9,7 @@ class VlessPreset:
     port: int
     transport_type: str
     server_name: str  # sni
-    fingerprint: str  # fp
+    fingerprint: str | None  # fp
     public_key: str  # pbk
     short_id: str  # sid
     flow: str | None = None

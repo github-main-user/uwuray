@@ -25,7 +25,7 @@ def _parse_vless_string(url: str) -> VlessPreset | None:
             port=port,
             transport_type=query_params["type"],
             server_name=query_params["sni"],
-            fingerprint=query_params["fp"],
+            fingerprint=query_params.get("fp"),
             public_key=query_params["pbk"],
             short_id=query_params["sid"],
             flow=query_params.get("flow"),
