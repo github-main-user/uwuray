@@ -81,7 +81,10 @@
         "domain_suffix": [
           ".dexland.org",
           ".githubcopilot.com",
-          ".mistral.ai"
+          ".mistral.ai",
+          ".anthropic.com",
+          ".claude.com",
+          ".claude.ai"
         ],
         "outbound": "vless-out"
       },
