@@ -4,7 +4,7 @@ import sys
 from argparse import ArgumentParser, Namespace
 from dataclasses import asdict
 
-from src.config import settings
+from src.repository import repo
 from src.models import VlessPreset
 from src.network import (
     fetch_subscription_data,
@@ -18,7 +18,7 @@ from src.utils import select_preset
 
 def handle_subscription() -> None:
     """Ensures a valid subscription URL is present, prompting the user if not."""
-    if settings.get_subscription_url():
+    if repo.get_subscription_url():
         return
 
     print("You need to add a subscription first.")
@@ -34,7 +34,7 @@ def handle_subscription() -> None:
                 print("The host is not reachable.")
                 continue
 
-            settings.save_subscription_url(sub_url)
+            repo.save_subscription_url(sub_url)
             print("Subscription link saved.")
             break
         except (KeyboardInterrupt, EOFError):
@@ -47,16 +47,16 @@ def get_presets(force_update: bool) -> list[VlessPreset]:
     Loads presets from cache or fetches them from the subscription URL.
     The presets are stored as a list of VlessPreset objects.
     """
-    cached_presets = settings.get_presets()
+    cached_presets = repo.get_presets()
 
     if not cached_presets or force_update:
         print("Fetching presets from subscription...")
-        sub_url = settings.get_subscription_url()
+        sub_url = repo.get_subscription_url()
         preset_urls = fetch_subscription_data(sub_url)
         parsed_presets = parse_presets(preset_urls)
 
         presets_to_save = [asdict(preset) for preset in parsed_presets]
-        settings.save_presets(presets_to_save)
+        repo.save_presets(presets_to_save)
         return parsed_presets
 
     return [VlessPreset(**data) for data in cached_presets]
@@ -66,7 +66,7 @@ def prepare_and_run(
     preset: VlessPreset, log_level: str, proxy_all: bool, print_only: bool
 ) -> None:
     """Generates the final config and either prints it or runs sing-box."""
-    config_template = settings.get_config_template()
+    config_template = repo.get_config_template()
     outbound = generate_vless_outbound(preset)
 
     config_template["log"]["level"] = log_level
@@ -82,7 +82,7 @@ def prepare_and_run(
         final_config_str = json.dumps(config_template, indent=2)
         print(final_config_str)
     else:
-        settings.save_previous_preset(preset.name)
+        repo.save_previous_preset(preset.name)
         run_singbox(config_template)
 
 
@@ -93,7 +93,7 @@ def main(args: Namespace) -> None:
 
     handle_subscription()
 
-    previous_preset_name = settings.get_previous_preset()
+    previous_preset_name = repo.get_previous_preset()
     presets = get_presets(force_update=args.update_subscription)
 
     selected_preset: VlessPreset | None = None

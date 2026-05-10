@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 
-class Settings:
+class AppRepository:
     _CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
     _BASE_DIR = Path(__file__).parent.parent
 
@@ -46,4 +46,4 @@ class Settings:
         self._PREVIOUS_PRESET.write_text(preset_name.strip())
 
 
-settings = Settings()
+repo = AppRepository()
