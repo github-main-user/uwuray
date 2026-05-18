@@ -3,36 +3,12 @@ import json
 import sys
 from argparse import ArgumentParser, Namespace
 from dataclasses import asdict
-from typing import cast
-
 from src.models import VlessPreset
-from src.network import (
-    fetch_subscription_data,
-    is_subscription_url_reachable,
-    is_subscription_url_valid,
-)
+from src.network import fetch_subscription_data, is_subscription_url_valid
 from src.parser import parse_presets
 from src.repository import repo
 from src.singbox import generate_vless_outbound, is_singbox_installed, run_singbox
 from src.utils import select_preset
-
-
-def request_subscription() -> str | None:
-    while True:
-        try:
-            sub_url = cast(str, input("Paste your subscription link here: ").strip())
-            if not is_subscription_url_valid(sub_url):
-                print("The provided text is not a valid URL.")
-                continue
-
-            print("Trying to reach the given host...")
-            if not is_subscription_url_reachable(sub_url):
-                print("The host is not reachable.")
-                continue
-
-            return sub_url
-        except (KeyboardInterrupt, EOFError):
-            return None
 
 
 def get_presets(force_update: bool) -> list[VlessPreset]:
@@ -80,18 +56,22 @@ def prepare_and_run(
 
 
 def main(args: Namespace) -> None:
+    if args.add_subscription:
+        url = args.add_subscription.strip()
+        if not is_subscription_url_valid(url):
+            print("invalid url.")
+            sys.exit(1)
+        repo.save_subscription_url(url)
+        print("subscription saved.")
+        sys.exit(0)
+
     if not is_singbox_installed():
         print("`sing-box` needs to be installed. Please install it and try again.")
         sys.exit(1)
 
     if not repo.get_subscription_url():
-        print("You need to add a subscription first.")
-        sub_url = request_subscription()
-        if sub_url is None:
-            print("\nOperation cancelled.")
-            sys.exit(1)
-        repo.save_subscription_url(sub_url)
-        print("Subscription link saved.")
+        print("no subscription found. use -s/--add-subscription <url> to add one.")
+        sys.exit(1)
 
     previous_preset_name = repo.get_previous_preset()
     presets = get_presets(force_update=args.update_subscription)
@@ -150,6 +130,12 @@ def create_parser() -> ArgumentParser:
         "--proxy-all",
         action="store_true",
         help="Proxy all trafic through vless.",
+    )
+    parser.add_argument(
+        "-s",
+        "--add-subscription",
+        metavar="URL",
+        help="Add a subscription URL.",
     )
     return parser
 
