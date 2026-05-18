@@ -3,8 +3,8 @@ import json
 import sys
 from argparse import ArgumentParser, Namespace
 from dataclasses import asdict
+from typing import cast
 
-from src.repository import repo
 from src.models import VlessPreset
 from src.network import (
     fetch_subscription_data,
@@ -12,19 +12,15 @@ from src.network import (
     is_subscription_url_valid,
 )
 from src.parser import parse_presets
+from src.repository import repo
 from src.singbox import generate_vless_outbound, is_singbox_installed, run_singbox
 from src.utils import select_preset
 
 
-def handle_subscription() -> None:
-    """Ensures a valid subscription URL is present, prompting the user if not."""
-    if repo.get_subscription_url():
-        return
-
-    print("You need to add a subscription first.")
+def request_subscription() -> str | None:
     while True:
         try:
-            sub_url = input("Paste your subscription link here: ").strip()
+            sub_url = cast(str, input("Paste your subscription link here: ").strip())
             if not is_subscription_url_valid(sub_url):
                 print("The provided text is not a valid URL.")
                 continue
@@ -34,12 +30,9 @@ def handle_subscription() -> None:
                 print("The host is not reachable.")
                 continue
 
-            repo.save_subscription_url(sub_url)
-            print("Subscription link saved.")
-            break
+            return sub_url
         except (KeyboardInterrupt, EOFError):
-            print("\nOperation cancelled.")
-            sys.exit(0)
+            return None
 
 
 def get_presets(force_update: bool) -> list[VlessPreset]:
@@ -91,7 +84,14 @@ def main(args: Namespace) -> None:
         print("`sing-box` needs to be installed. Please install it and try again.")
         sys.exit(1)
 
-    handle_subscription()
+    if not repo.get_subscription_url():
+        print("You need to add a subscription first.")
+        sub_url = request_subscription()
+        if sub_url is None:
+            print("\nOperation cancelled.")
+            sys.exit(1)
+        repo.save_subscription_url(sub_url)
+        print("Subscription link saved.")
 
     previous_preset_name = repo.get_previous_preset()
     presets = get_presets(force_update=args.update_subscription)
