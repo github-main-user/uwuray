@@ -21,6 +21,8 @@ class AppRepository:
         self._PREVIOUS_PRESET: Path = self.APP_CONFIG_PATH / "previous_preset.txt"
         self._PREVIOUS_PRESET.touch()
 
+        self._CONFIG_TEMPLATE: Path = self.APP_CONFIG_PATH / "config_template.json"
+
     def get_subscription_url(self) -> str:
         return self._SUBSCRIPTION.read_text().strip()
 
@@ -35,9 +37,11 @@ class AppRepository:
         self._PRESETS.write_text(json.dumps(presets, ensure_ascii=False, indent=2))
 
     def get_config_template(self) -> dict[str, Any]:
-        return json.loads(
-            (self._BASE_DIR / "resources/config_template.json").read_text()
-        )
+        if not self._CONFIG_TEMPLATE.exists():
+            self._CONFIG_TEMPLATE.write_text(
+                (self._BASE_DIR / "resources/config_template.json").read_text()
+            )
+        return json.loads(self._CONFIG_TEMPLATE.read_text())
 
     def get_previous_preset(self) -> str:
         return self._PREVIOUS_PRESET.read_text().strip()
