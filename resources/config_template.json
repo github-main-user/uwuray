@@ -2,42 +2,6 @@
   "log": {
     "level": "warn"
   },
-  "dns": {
-    "servers": [
-      {
-        "tag": "proxy_dns",
-        "type": "https",
-        "server": "1.1.1.1",
-        "path": "/dns-query",
-        "detour": "vless-out"
-      },
-      {
-        "tag": "direct_dns",
-        "type": "udp",
-        "server": "8.8.8.8"
-      }
-    ],
-    "rules": [
-      {
-        "domain_suffix": [
-          ".ru",
-          ".sky.pro"
-        ],
-        "server": "direct_dns"
-      },
-      {
-        "domain_keyword": [
-          "zelenaya",
-          "vk",
-          "yandex",
-          "github",
-          "githubusercontent"
-        ],
-        "server": "direct_dns"
-      }
-    ],
-    "final": "proxy_dns"
-  },
   "outbounds": [
     {
       "type": "direct",
@@ -67,66 +31,7 @@
   ],
   "route": {
     "auto_detect_interface": true,
-    "default_domain_resolver": "direct_dns",
-    "rules": [
-      {
-        "protocol": "dns",
-        "action": "hijack-dns"
-      },
-      {
-        "protocol": "ssh",
-        "outbound": "direct"
-      },
-      {
-        "domain_suffix": [
-          ".dexland.org",
-          ".githubcopilot.com",
-          ".mistral.ai",
-          ".anthropic.com",
-          ".claude.com",
-          ".claude.ai"
-        ],
-        "outbound": "vless-out"
-      },
-      {
-        "domain_suffix": [
-          ".ru",
-          ".sky.pro"
-        ],
-        "outbound": "direct"
-      },
-      {
-        "domain_keyword": [
-          "zelenaya",
-          "vk",
-          "yandex",
-          "github",
-          "githubusercontent"
-        ],
-        "outbound": "direct"
-      },
-      {
-        "inbound": "http-in",
-        "outbound": "vless-out"
-      },
-      {
-        "inbound": "tun-in",
-        "process_name": [
-          "librewolf",
-          "Discord",
-          "Telegram",
-          "opencode"
-        ],
-        "outbound": "vless-out"
-      },
-      {
-        "inbound": "tun-in",
-        "source_ip_cidr": [
-          "192.168.122.0/24"
-        ],
-        "outbound": "vless-out"
-      }
-    ],
+    "rules": [],
     "final": "direct"
   }
 }
