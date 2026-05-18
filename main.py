@@ -25,7 +25,7 @@ def get_presets(force_update: bool) -> list[VlessPreset]:
         parsed_presets = parse_presets(preset_urls)
 
         presets_to_save = [asdict(preset) for preset in parsed_presets]
-        repo.save_presets(presets_to_save)
+        repo.set_presets(presets_to_save)
         return parsed_presets
 
     return [VlessPreset(**data) for data in cached_presets]
@@ -51,7 +51,7 @@ def prepare_and_run(
         final_config_str = json.dumps(config_template, indent=2)
         print(final_config_str)
     else:
-        repo.save_previous_preset(preset.name)
+        repo.set_previous_preset(preset.name)
         run_singbox(config_template)
 
 
@@ -61,7 +61,7 @@ def main(args: Namespace) -> None:
         if not is_subscription_url_valid(url):
             print("invalid url.")
             sys.exit(1)
-        repo.save_subscription_url(url)
+        repo.set_subscription_url(url)
         print("subscription saved.")
         sys.exit(0)
 

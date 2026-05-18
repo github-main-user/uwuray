@@ -26,14 +26,14 @@ class AppRepository:
     def get_subscription_url(self) -> str:
         return self._SUBSCRIPTION.read_text().strip()
 
-    def save_subscription_url(self, url: str) -> None:
+    def set_subscription_url(self, url: str) -> None:
         self._SUBSCRIPTION.write_text(url)
 
     def get_presets(self) -> list[dict[str, Any]]:
         content = self._PRESETS.read_text()
         return json.loads(content) if content else []
 
-    def save_presets(self, presets: list[dict[str, Any]]) -> None:
+    def set_presets(self, presets: list[dict[str, Any]]) -> None:
         self._PRESETS.write_text(json.dumps(presets, ensure_ascii=False, indent=2))
 
     def get_config_template(self) -> dict[str, Any]:
@@ -46,7 +46,7 @@ class AppRepository:
     def get_previous_preset(self) -> str:
         return self._PREVIOUS_PRESET.read_text().strip()
 
-    def save_previous_preset(self, preset_name: str) -> None:
+    def set_previous_preset(self, preset_name: str) -> None:
         self._PREVIOUS_PRESET.write_text(preset_name.strip())
 
 
