@@ -3,6 +3,7 @@ import json
 import sys
 from argparse import ArgumentParser, Namespace
 from dataclasses import asdict
+
 from src.models import VlessPreset
 from src.network import fetch_subscription_data, is_subscription_url_valid
 from src.parser import parse_presets
@@ -11,24 +12,29 @@ from src.singbox import generate_vless_outbound, is_singbox_installed, run_singb
 from src.utils import select_preset
 
 
-def get_presets(force_update: bool) -> list[VlessPreset]:
-    """
-    Loads presets from cache or fetches them from the subscription URL.
-    The presets are stored as a list of VlessPreset objects.
-    """
-    cached_presets = repo.get_presets()
+def update_subscriptions() -> None:
+    urls = repo.get_subscription_urls()
+    if not urls:
+        print("no subscriptions found. use -s/--add-subscription <url> to add one.")
+        sys.exit(1)
+    for url in urls:
+        print(f"fetching {url}...")
+        try:
+            preset_urls = fetch_subscription_data(url)
+            parsed = parse_presets(preset_urls)
+            repo.set_presets_for_url(url, [asdict(p) for p in parsed])
+            print(f"saved {len(parsed)} presets.")
+        except Exception as e:
+            print(f"failed: {e}")
 
-    if not cached_presets or force_update:
-        print("Fetching presets from subscription...")
-        sub_url = repo.get_subscription_url()
-        preset_urls = fetch_subscription_data(sub_url)
-        parsed_presets = parse_presets(preset_urls)
 
-        presets_to_save = [asdict(preset) for preset in parsed_presets]
-        repo.set_presets(presets_to_save)
-        return parsed_presets
-
-    return [VlessPreset(**data) for data in cached_presets]
+def get_presets() -> dict[str, list[VlessPreset]]:
+    raw = repo.get_presets()
+    urls = repo.get_subscription_urls()
+    result: dict[str, list[VlessPreset]] = {}
+    for url in urls:
+        result[url] = [VlessPreset(**d) for d in raw.get(url, [])]
+    return result
 
 
 def prepare_and_run(
@@ -61,38 +67,52 @@ def main(args: Namespace) -> None:
         if not is_subscription_url_valid(url):
             print("invalid url.")
             sys.exit(1)
-        repo.set_subscription_url(url)
+        if url in repo.get_subscription_urls():
+            print("subscription already exists.")
+            sys.exit(0)
+        repo.add_subscription(url)
         print("subscription saved.")
+        sys.exit(0)
+
+    if args.update_subscription:
+        update_subscriptions()
         sys.exit(0)
 
     if not is_singbox_installed():
         print("`sing-box` needs to be installed. Please install it and try again.")
         sys.exit(1)
 
-    if not repo.get_subscription_url():
-        print("no subscription found. use -s/--add-subscription <url> to add one.")
+    urls = repo.get_subscription_urls()
+    if not urls:
+        print("no subscriptions found. use -s/--add-subscription <url> to add one.")
+        sys.exit(1)
+
+    presets_by_url = get_presets()
+    if not any(presets_by_url.values()):
+        print("no cached presets. run with -u to fetch.")
         sys.exit(1)
 
     previous_preset_name = repo.get_previous_preset()
-    presets = get_presets(force_update=args.update_subscription)
-
     selected_preset: VlessPreset | None = None
 
     if args.run_previous and previous_preset_name:
-        # Find preset by name
-        for preset in presets:
-            if preset.name == previous_preset_name:
-                selected_preset = preset
-                print(f'Running previous preset: "{previous_preset_name}"')
+        for presets in presets_by_url.values():
+            for preset in presets:
+                if preset.name == previous_preset_name:
+                    selected_preset = preset
+                    print(f'running previous preset: "{previous_preset_name}"')
+                    break
+            if selected_preset:
                 break
         if not selected_preset:
-            print(f'Warning: Previous preset "{previous_preset_name}" not found.')
+            print(f'warning: previous preset "{previous_preset_name}" not found.')
 
     if not selected_preset:
-        selected_preset = select_preset(presets)
+        flat_presets = [p for presets in presets_by_url.values() for p in presets]
+        selected_preset = select_preset(flat_presets)
         if not selected_preset:
             return
-        print(f"Selected preset: {selected_preset.name}")
+        print(f"selected preset: {selected_preset.name}")
 
     prepare_and_run(selected_preset, args.log_level, args.proxy_all, args.print_config)
 
@@ -104,7 +124,7 @@ def create_parser() -> ArgumentParser:
         "-u",
         "--update-subscription",
         action="store_true",
-        help="Update presets from the subscription link before start.",
+        help="Fetch and update presets for each subscription, then exit.",
     )
     parser.add_argument(
         "-c",
