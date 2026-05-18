@@ -57,6 +57,9 @@ def prepare_and_run(
         final_config_str = json.dumps(config_template, indent=2)
         print(final_config_str)
     else:
+        if not is_singbox_installed():
+            print("`sing-box` needs to be installed. Please install it and try again.")
+            sys.exit(1)
         repo.set_previous_preset(preset.name)
         run_singbox(config_template)
 
@@ -77,10 +80,6 @@ def main(args: Namespace) -> None:
     if args.update_subscription:
         update_subscriptions()
         sys.exit(0)
-
-    if not is_singbox_installed():
-        print("`sing-box` needs to be installed. Please install it and try again.")
-        sys.exit(1)
 
     urls = repo.get_subscription_urls()
     if not urls:
