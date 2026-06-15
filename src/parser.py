@@ -1,6 +1,7 @@
 from urllib.parse import parse_qs, unquote, urlparse
 
 from src.models import VlessPreset
+from src.singbox import SUPPORTED_TRANSPORTS
 
 
 def _parse_vless_string(url: str) -> VlessPreset | None:
@@ -18,12 +19,18 @@ def _parse_vless_string(url: str) -> VlessPreset | None:
 
         query_params = {k: v[0] for k, v in parse_qs(result.query).items()}
 
+        name = unquote(result.fragment).strip() if result.fragment else "No name"
+        transport_type = query_params["type"]
+        if transport_type not in SUPPORTED_TRANSPORTS:
+            print(f'skipping "{name}": unsupported transport "{transport_type}"')
+            return None
+
         return VlessPreset(
-            name=unquote(result.fragment).strip() if result.fragment else "No name",
+            name=name,
             uuid=uuid,
             host=host,
             port=port,
-            transport_type=query_params["type"],
+            transport_type=transport_type,
             server_name=query_params["sni"],
             fingerprint=query_params.get("fp"),
             public_key=query_params["pbk"],

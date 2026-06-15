@@ -7,15 +7,19 @@ from typing import Any
 
 from src.models import VlessPreset
 
+SUPPORTED_TRANSPORTS = {"tcp", "ws", "grpc", "http", "httpupgrade", "quic"}
+
 
 def is_singbox_installed() -> bool:
     return shutil.which("sing-box") is not None
 
 
-def generate_vless_outbound(preset: VlessPreset) -> dict[str, Any]:
+def generate_vless_outbound(
+    preset: VlessPreset, tag: str = "vless-out"
+) -> dict[str, Any]:
     result = {
         "type": "vless",
-        "tag": "vless-out",
+        "tag": tag,
         "server": preset.host,
         "server_port": preset.port,
         "uuid": preset.uuid,
@@ -36,6 +40,23 @@ def generate_vless_outbound(preset: VlessPreset) -> dict[str, Any]:
         result["transport"] = {"type": preset.transport_type}
 
     return result
+
+
+def generate_urltest_config(
+    presets: list[VlessPreset], api_port: int
+) -> dict[str, Any]:
+    outbounds = [
+        generate_vless_outbound(p, tag=str(i)) for i, p in enumerate(presets)
+    ]
+    return {
+        "log": {"level": "warn"},
+        "outbounds": outbounds,
+        "experimental": {
+            "clash_api": {
+                "external_controller": f"127.0.0.1:{api_port}",
+            }
+        },
+    }
 
 
 def run_singbox(config: dict[str, Any]):

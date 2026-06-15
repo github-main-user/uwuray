@@ -9,6 +9,7 @@ from src.network import fetch_subscription_data, is_subscription_url_valid
 from src.parser import parse_presets
 from src.repository import repo
 from src.singbox import generate_vless_outbound, is_singbox_installed, run_singbox
+from src.urltest import run_url_test
 from src.utils import select_preset
 
 
@@ -91,6 +92,20 @@ def main(args: Namespace) -> None:
         print("no cached presets. run with -u to fetch.")
         sys.exit(1)
 
+    if args.url_test:
+        if not is_singbox_installed():
+            print("`sing-box` needs to be installed. Please install it and try again.")
+            sys.exit(1)
+        flat_presets = [p for presets in presets_by_url.values() for p in presets]
+        print(f"testing {len(flat_presets)} presets...")
+        results = run_url_test(flat_presets)
+        results.sort(key=lambda r: (r[1] is None, r[1]))
+        width = max(len(p.name) for p, _ in results)
+        for preset, delay in results:
+            delay_str = f"{delay} ms" if delay is not None else "timeout"
+            print(f"{preset.name:<{width}}  {delay_str}")
+        sys.exit(0)
+
     previous_preset_name = repo.get_previous_preset()
     selected_preset: VlessPreset | None = None
 
@@ -155,6 +170,12 @@ def create_parser() -> ArgumentParser:
         "--add-subscription",
         metavar="URL",
         help="Add a subscription URL.",
+    )
+    parser.add_argument(
+        "-t",
+        "--url-test",
+        action="store_true",
+        help="Test real delay of all presets and exit.",
     )
     return parser
 
