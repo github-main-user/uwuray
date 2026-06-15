@@ -2,7 +2,10 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import Any
 
 from src.models import VlessPreset
@@ -10,11 +13,28 @@ from src.models import VlessPreset
 SUPPORTED_TRANSPORTS = {"tcp", "ws", "grpc", "http", "httpupgrade", "quic"}
 
 
-def is_singbox_installed() -> bool:
-    return shutil.which("sing-box") is not None
+def ensure_singbox() -> None:
+    if shutil.which("sing-box") is None:
+        print("`sing-box` is not installed. install it and try again.")
+        sys.exit(1)
 
 
-def generate_vless_outbound(
+@contextmanager
+def temp_config(config: dict[str, Any]) -> Generator[str]:
+    path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", delete=False, suffix=".json", dir=tempfile.gettempdir()
+        ) as f:
+            path = f.name
+            f.write(json.dumps(config))
+        yield path
+    finally:
+        if path and os.path.exists(path):
+            os.remove(path)
+
+
+def _generate_vless_outbound(
     preset: VlessPreset, tag: str = "vless-out"
 ) -> dict[str, Any]:
     result = {
@@ -42,12 +62,20 @@ def generate_vless_outbound(
     return result
 
 
-def generate_urltest_config(
-    presets: list[VlessPreset], api_port: int
+def build_config_from_template(
+    template: dict[str, Any], preset: VlessPreset, log_level: str, proxy_all: bool
 ) -> dict[str, Any]:
-    outbounds = [
-        generate_vless_outbound(p, tag=str(i)) for i, p in enumerate(presets)
-    ]
+    template["log"]["level"] = log_level
+    template["outbounds"].append(_generate_vless_outbound(preset))
+    if proxy_all:
+        template["dns"]["rules"] = []
+        template["route"]["rules"] = [{"protocol": "dns", "action": "hijack-dns"}]
+        template["route"]["final"] = "vless-out"
+    return template
+
+
+def build_urltest_config(presets: list[VlessPreset], api_port: int) -> dict[str, Any]:
+    outbounds = [_generate_vless_outbound(p, tag=str(i)) for i, p in enumerate(presets)]
     return {
         "log": {"level": "warn"},
         "outbounds": outbounds,
@@ -60,20 +88,6 @@ def generate_urltest_config(
 
 
 def run_singbox(config: dict[str, Any]):
-    temp_config_path = None
-    try:
-        with tempfile.NamedTemporaryFile(
-            mode="w",
-            delete=False,
-            suffix=".json",
-            dir=tempfile.gettempdir(),
-        ) as temp_config:
-            temp_config_path = temp_config.name
-            temp_config.write(json.dumps(config, indent=2))
-
-        print("Running sing-box...")
-        run_cmd = ["sing-box", "run", "-c", temp_config_path]
-        subprocess.run(run_cmd, check=False)
-    finally:
-        if temp_config_path and os.path.exists(temp_config_path):
-            os.remove(temp_config_path)
+    with temp_config(config) as path:
+        print("running sing-box...")
+        subprocess.run(["sing-box", "run", "-c", path], check=False)
