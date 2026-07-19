@@ -87,7 +87,19 @@ def build_urltest_config(presets: list[VlessPreset], api_port: int) -> dict[str,
     }
 
 
-def run_singbox(config: dict[str, Any]):
+def run_singbox(config: dict[str, Any]) -> None:
     with temp_config(config) as path:
         print("running sing-box...")
-        subprocess.run(["sing-box", "run", "-c", path], check=False)
+        result = subprocess.run(
+            ["sing-box", "run", "-c", path], capture_output=True, text=True, check=False
+        )
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        if result.returncode and any(
+            error in result.stderr.lower()
+            for error in ("permission denied", "operation not permitted")
+        ):
+            print(
+                "sing-box needs network-admin permissions for the TUN interface.\n"
+                'run: sudo setcap cap_net_admin=+ep "$(command -v sing-box)"'
+            )
